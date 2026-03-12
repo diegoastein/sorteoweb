@@ -319,51 +319,52 @@
             const sold = numbers.filter(n => n.sold).map(n => `✅ *${n.id.toString().padStart(2, '0')}* ${n.buyer}`).join('\n');
             const free = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
 
-            const text = `🛠️ *SORTEO: ${title}* 🛠️
+            // Formato de texto más llamativo y "grande" visualmente
+            const text = `🚀 *S O R T E O* 🚀
+🔥 *${title.split('').join(' ')}* 🔥
 
-⚙️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}
+🛠️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}
 🎲 *SORTEA POR:* ${lottery}
 💵 *VALOR:* $${price}
 🏦 *ALIAS:* ${alias}
 👤 *TITULAR:* ${owner}
 
 📝 *VENDIDOS:*
-${sold || 'Ninguno aún... ¡aprovechá!'}
+${sold || '_¡Nadie aún! Sé el primero..._'}
 
 🎟️ *DISPONIBLES:*
 ${free}
 
-🚀 _¡Muchas gracias por participar y mucha suerte!_`;
+✨ _¡Mucha suerte para todos!_ ✨`;
 
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: images })) {
-                try {
-                    await navigator.share({
-                        files: images,
-                        text: text,
-                        title: `Sorteo ${title}`
-                    });
-                    showNotif("✅ Compartido!");
-                } catch (err) {
-                    if (err.name !== 'AbortError') fallbackCopy(text);
-                }
-            } else {
-                fallbackCopy(text);
-            }
-        }
-
-        function fallbackCopy(text) {
+            // PASO 1: Siempre copiar el texto al portapapeles automáticamente
             const el = document.createElement('textarea');
             el.value = text;
             document.body.appendChild(el);
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            showNotif("✅ Texto Copiado");
+
+            // PASO 2: Intentar compartir archivos
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: images }) && images.length > 0) {
+                try {
+                    await navigator.share({
+                        files: images,
+                        title: `Sorteo ${title}`,
+                        text: text // Algunos sistemas lo aceptarán, otros no
+                    });
+                    showNotif("✅ Imágenes enviadas. ¡No olvides PEGAR el texto!");
+                } catch (err) {
+                    if (err.name !== 'AbortError') showNotif("✅ Texto copiado");
+                }
+            } else {
+                showNotif("✅ Texto copiado. ¡Pégalo en WhatsApp!");
+            }
         }
 
         function toggleConfig() { document.getElementById('configPanel').classList.toggle('hidden'); }
         function closePanel() { selectedIdx = null; document.getElementById('saleContent').innerHTML = '<div class="text-center py-12 px-4 text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl"><i data-lucide="touchpad" class="w-10 h-10 mx-auto mb-4 opacity-10"></i><p class="text-xs font-bold leading-relaxed">Toca un número para asignar un dueño</p></div>'; renderGrid(); lucide.createIcons(); }
-        function showNotif(msg) { const n = document.getElementById('notif'); document.getElementById('notifText').innerText = msg; n.classList.remove('hidden'); setTimeout(() => n.classList.add('hidden'), 3000); }
+        function showNotif(msg) { const n = document.getElementById('notif'); document.getElementById('notifText').innerText = msg; n.classList.remove('hidden'); setTimeout(() => n.classList.add('hidden'), 4000); }
         function showResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
         function hideResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
         function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); images = []; imagePreviews = []; renderGrid(); renderGallery(); updateStats(); hideResetModal(); showNotif("Reinicio Completo"); }
