@@ -35,9 +35,9 @@
                     <i data-lucide="settings" class="w-5 h-5"></i>
                     Configurar
                 </button>
-                <button onclick="copyToWhatsApp()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-green-700 transition font-bold">
+                <button onclick="handleShare()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-green-700 transition font-bold">
                     <i data-lucide="share-2" class="w-5 h-5"></i>
-                    Compartir
+                    Compartir Todo
                 </button>
             </div>
         </header>
@@ -87,6 +87,7 @@
                         <input type="file" class="hidden" accept="image/*" multiple onchange="handleImages(this)">
                     </label>
                 </div>
+                <p class="text-[10px] text-slate-400 italic">* Las fotos se enviarán junto con la lista al compartir.</p>
             </div>
 
             <div class="mt-6 pt-6 border-t border-slate-100 flex justify-end">
@@ -167,7 +168,8 @@
 
     <script>
         let numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false }));
-        let images = [];
+        let images = []; // Almacena archivos originales para compartir
+        let imagePreviews = []; // Almacena base64 para la UI
         let selectedIdx = null;
 
         function init() {
@@ -244,9 +246,10 @@
         function handleImages(input) {
             if (input.files) {
                 Array.from(input.files).forEach(file => {
+                    images.push(file); // Guardamos el archivo real para compartir
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        images.push(e.target.result);
+                        imagePreviews.push(e.target.result);
                         renderGallery();
                     };
                     reader.readAsDataURL(file);
@@ -258,21 +261,18 @@
             const gal = document.getElementById('gallery');
             const cont = document.getElementById('imgContainer');
             
-            // Limpiar pero mantener el botón "Subir"
             const uploadBtn = cont.querySelector('label');
             cont.innerHTML = '';
             cont.appendChild(uploadBtn);
             gal.innerHTML = '';
 
-            images.forEach((src, i) => {
-                // Miniatura en config
+            imagePreviews.forEach((src, i) => {
                 const div = document.createElement('div');
                 div.className = "relative w-20 h-20 group";
                 div.innerHTML = `<img src="${src}" class="w-full h-full object-cover rounded-xl border shadow-sm">
                                 <button onclick="removeImg(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"><i data-lucide="x" class="w-3 h-3"></i></button>`;
                 cont.insertBefore(div, uploadBtn);
 
-                // Imagen en galería principal
                 const imgDiv = document.createElement('div');
                 imgDiv.className = "shrink-0 w-48 h-32 rounded-2xl overflow-hidden shadow-md border border-white";
                 imgDiv.innerHTML = `<img src="${src}" class="w-full h-full object-cover">`;
@@ -283,10 +283,11 @@
 
         function removeImg(i) {
             images.splice(i, 1);
+            imagePreviews.splice(i, 1);
             renderGallery();
         }
 
-        function copyToWhatsApp() {
+        async function handleShare() {
             const title = document.getElementById('inTitle').value;
             const price = document.getElementById('inPrice').value;
             const lottery = document.getElementById('inLottery').value;
@@ -313,13 +314,34 @@ ${free}
 
 _¡Suerte para todos!_`;
 
+            // Intentar usar Web Share API (Mobile compatible)
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: images })) {
+                try {
+                    await navigator.share({
+                        files: images,
+                        text: text,
+                        title: `Sorteo ${title}`
+                    });
+                    showNotif("✅ Compartido con éxito");
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        fallbackCopy(text);
+                    }
+                }
+            } else {
+                // Si no hay Web Share (PC), solo copiamos el texto
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
             const el = document.createElement('textarea');
             el.value = text;
             document.body.appendChild(el);
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            showNotif("✅ Lista copiada para WhatsApp");
+            showNotif("✅ Lista copiada (las fotos deben enviarse aparte en PC)");
         }
 
         function toggleConfig() { document.getElementById('configPanel').classList.toggle('hidden'); }
@@ -327,7 +349,7 @@ _¡Suerte para todos!_`;
         function showNotif(msg) { const n = document.getElementById('notif'); document.getElementById('notifText').innerText = msg; n.classList.remove('hidden'); setTimeout(() => n.classList.add('hidden'), 3000); }
         function showResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
         function hideResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
-        function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); images = []; renderGrid(); renderGallery(); updateStats(); hideResetModal(); showNotif("Sorteo reiniciado"); }
+        function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); images = []; imagePreviews = []; renderGrid(); renderGallery(); updateStats(); hideResetModal(); showNotif("Sorteo reiniciado"); }
 
         window.onload = init;
     </script>
