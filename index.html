@@ -169,7 +169,7 @@
 
     <!-- Modal -->
     <div id="resetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl">
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-xl">
             <div class="text-red-600 mb-6 flex flex-col items-center gap-3 text-center">
                 <i data-lucide="alert-triangle" class="w-12 h-12"></i>
                 <h3 class="text-xl font-black uppercase">¿Borrar todo?</h3>
@@ -319,7 +319,7 @@
             const sold = numbers.filter(n => n.sold).map(n => `✅ *${n.id.toString().padStart(2, '0')}* ${n.buyer}`).join('\n');
             const free = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
 
-            // Formato de texto más llamativo y "grande" visualmente
+            // Formato de texto con la instrucción de enviar comprobante
             const text = `🚀 *S O R T E O* 🚀
 🔥 *${title.split('').join(' ')}* 🔥
 
@@ -335,7 +335,8 @@ ${sold || '_¡Nadie aún! Sé el primero..._'}
 🎟️ *DISPONIBLES:*
 ${free}
 
-✨ _¡Mucha suerte para todos!_ ✨`;
+✨ _¡Muchas gracias por participar y mucha suerte!_ ✨
+📲 *Envie el comprobante por privado*`;
 
             // PASO 1: Siempre copiar el texto al portapapeles automáticamente
             const el = document.createElement('textarea');
@@ -351,7 +352,7 @@ ${free}
                     await navigator.share({
                         files: images,
                         title: `Sorteo ${title}`,
-                        text: text // Algunos sistemas lo aceptarán, otros no
+                        text: text 
                     });
                     showNotif("✅ Imágenes enviadas. ¡No olvides PEGAR el texto!");
                 } catch (err) {
