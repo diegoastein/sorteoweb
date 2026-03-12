@@ -1,0 +1,435 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Copy, Trash2, User, Ticket, Settings, Share2, CheckCircle2, RotateCcw, AlertCircle, X, Image as ImageIcon, Plus, Trash } from 'lucide-react';
+
+const App = () => {
+  const [raffleInfo, setRaffleInfo] = useState({
+    title: 'Taladro + Amoladora',
+    price: '4000',
+    alias: 'herramientaslibres',
+    owner: 'Emilio Di Tella',
+    mode: '100', // '100' o '50' (pares)
+    lottery: 'Quiniela Correntina',
+    images: [] // Almacenará strings base64
+  });
+
+  const [numbers, setNumbers] = useState(Array.from({ length: 100 }, (_, i) => ({
+    id: i,
+    buyer: '',
+    sold: false
+  })));
+
+  const [selectedNum, setSelectedNum] = useState(null);
+  const [buyerName, setBuyerName] = useState('');
+  const [showConfig, setShowConfig] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  // Estadísticas
+  const stats = useMemo(() => {
+    const sold = numbers.filter(n => n.sold).length;
+    return {
+      sold,
+      available: numbers.length - sold,
+      totalMoney: sold * parseInt(raffleInfo.price || 0)
+    };
+  }, [numbers, raffleInfo.price]);
+
+  const showMsg = (text) => {
+    setNotification(text);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRaffleInfo(prev => ({
+          ...prev,
+          images: [...prev.images, reader.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index) => {
+    setRaffleInfo(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSell = () => {
+    if (selectedNum === null) return;
+
+    const newNumbers = [...numbers];
+    
+    if (raffleInfo.mode === '50') {
+      const pair = (selectedNum + 50) % 100;
+      newNumbers[selectedNum] = { ...newNumbers[selectedNum], buyer: buyerName, sold: !!buyerName };
+      newNumbers[pair] = { ...newNumbers[pair], buyer: buyerName, sold: !!buyerName };
+    } else {
+      newNumbers[selectedNum] = { ...newNumbers[selectedNum], buyer: buyerName, sold: !!buyerName };
+    }
+
+    setNumbers(newNumbers);
+    setSelectedNum(null);
+    setBuyerName('');
+    showMsg('Cambios guardados correctamente');
+  };
+
+  const copyToWhatsApp = () => {
+    const soldList = numbers
+      .filter(n => n.sold)
+      .map(n => `${n.id.toString().padStart(2, '0')} ${n.buyer}`)
+      .join('\n');
+
+    const availableList = numbers
+      .filter(n => !n.sold)
+      .map(n => n.id.toString().padStart(2, '0'))
+      .join(' - ');
+
+    const text = `📢 *SORTEO: ${raffleInfo.title}*
+    
+💎 *Modalidad:* ${raffleInfo.mode === '100' ? '100 números' : '50 números (pares)'}.
+♦️ *Sortea por:* ${raffleInfo.lottery} (al completar).
+💰 *Valor por número:* $${raffleInfo.price}
+🏦 *Alias para transferir:* ${raffleInfo.alias}
+👤 *Titular:* ${raffleInfo.owner}
+
+📍 *NÚMEROS VENDIDOS:*
+${soldList || 'Ninguno aún'}
+
+📌 *NÚMEROS DISPONIBLES:*
+${availableList}
+
+_¡Muchas gracias por participar!_`;
+
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        showMsg('✅ ¡Texto copiado! Pégalo en WhatsApp');
+      } else {
+        throw new Error('No se pudo copiar');
+      }
+    } catch (err) {
+      showMsg('❌ Error al copiar. Intenta manualmente.');
+    }
+  };
+
+  const confirmReset = () => {
+    setNumbers(Array.from({ length: 100 }, (_, i) => ({ id: i, buyer: '', sold: false })));
+    setRaffleInfo(prev => ({ ...prev, images: [] }));
+    setShowResetModal(false);
+    showMsg('Sorteo reiniciado');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800 relative">
+      
+      {/* Notificación Flotante */}
+      {notification && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+          <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-green-400" />
+            <span className="text-sm font-medium">{notification}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Reinicio */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <AlertCircle size={24} />
+              <h3 className="text-lg font-bold">¿Reiniciar sorteo?</h3>
+            </div>
+            <p className="text-slate-600 mb-6">Esta acción borrará todos los nombres, ventas y fotos actuales.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={confirmReset}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 transition"
+              >
+                Sí, borrar todo
+              </button>
+              <button 
+                onClick={() => setShowResetModal(false)}
+                className="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-bold hover:bg-slate-200 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-700 leading-tight">Gestor de Sorteos</h1>
+            <p className="text-slate-500 font-medium">Herramientas Libres - WhatsApp Manager</p>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <button 
+              onClick={() => setShowConfig(!showConfig)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm hover:bg-slate-50 transition font-semibold"
+            >
+              <Settings size={18} />
+              Configurar
+            </button>
+            <button 
+              onClick={copyToWhatsApp}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl shadow-md hover:bg-green-700 transition font-bold"
+            >
+              <Share2 size={18} />
+              Compartir Lista
+            </button>
+          </div>
+        </header>
+
+        {/* Config Panel */}
+        {showConfig && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 animate-in fade-in slide-in-from-top-4">
+            <h3 className="text-sm font-black text-indigo-600 uppercase mb-4 flex items-center gap-2">
+              <Settings size={16} /> Ajustes del Sorteo
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Premio</label>
+                <input 
+                  value={raffleInfo.title}
+                  onChange={e => setRaffleInfo({...raffleInfo, title: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Precio $</label>
+                <input 
+                  type="number"
+                  value={raffleInfo.price}
+                  onChange={e => setRaffleInfo({...raffleInfo, price: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Lotería</label>
+                <input 
+                  value={raffleInfo.lottery}
+                  onChange={e => setRaffleInfo({...raffleInfo, lottery: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Alias CBU/CVU</label>
+                <input 
+                  value={raffleInfo.alias}
+                  onChange={e => setRaffleInfo({...raffleInfo, alias: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Titular</label>
+                <input 
+                  value={raffleInfo.owner}
+                  onChange={e => setRaffleInfo({...raffleInfo, owner: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase">Modalidad</label>
+                <select 
+                  value={raffleInfo.mode}
+                  onChange={e => setRaffleInfo({...raffleInfo, mode: e.target.value})}
+                  className="w-full p-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="100">100 Números (Indiv)</option>
+                  <option value="50">50 Números (Pares)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Image Manager */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-slate-400 uppercase block">Fotos del Producto</label>
+              <div className="flex flex-wrap gap-3">
+                {raffleInfo.images.map((img, idx) => (
+                  <div key={idx} className="relative w-20 h-20 group">
+                    <img src={img} className="w-full h-full object-cover rounded-xl border border-slate-200 shadow-sm" alt="Preview" />
+                    <button 
+                      onClick={() => removeImage(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition text-slate-400 hover:text-indigo-500 hover:border-indigo-200">
+                  <Plus size={20} />
+                  <span className="text-[10px] font-bold mt-1">Subir</span>
+                  <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 flex justify-end">
+               <button 
+                 onClick={() => setShowResetModal(true)} 
+                 className="text-red-500 flex items-center gap-1 text-xs font-bold hover:bg-red-50 px-3 py-1 rounded-full transition"
+                >
+                 <RotateCcw size={14} /> Reiniciar Sorteo
+               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Gallery Preview (In Main View) */}
+        {raffleInfo.images.length > 0 && (
+          <div className="mb-8 overflow-x-auto">
+            <div className="flex gap-4 pb-2">
+              {raffleInfo.images.map((img, idx) => (
+                <div key={idx} className="shrink-0 w-48 h-32 rounded-2xl overflow-hidden shadow-md border border-white">
+                  <img src={img} className="w-full h-full object-cover" alt="Sorteo" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-md">
+            <p className="text-indigo-100 text-[10px] font-black uppercase tracking-wider">Caja</p>
+            <p className="text-xl font-black">${stats.totalMoney.toLocaleString()}</p>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">Ventas</p>
+            <p className="text-xl font-black text-green-600">{stats.sold}</p>
+          </div>
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider">Libres</p>
+            <p className="text-xl font-black text-slate-700">{stats.available}</p>
+          </div>
+        </div>
+
+        {/* Grid and Sale Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Numbers Grid */}
+          <div className="lg:col-span-2">
+            <h2 className="text-sm font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <Ticket className="text-indigo-600" size={18} /> 
+              Tablero de Números
+            </h2>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+              {numbers.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => {
+                    setSelectedNum(n.id);
+                    setBuyerName(n.buyer);
+                  }}
+                  className={`
+                    h-11 text-xs font-black rounded-xl transition-all
+                    ${n.sold 
+                      ? 'bg-green-100 text-green-700 border-green-200 border shadow-inner' 
+                      : 'bg-slate-50 text-slate-400 border-slate-200 border hover:border-indigo-400 hover:text-indigo-600'}
+                    ${selectedNum === n.id ? 'ring-2 ring-indigo-500 scale-105 z-10 shadow-lg' : ''}
+                  `}
+                >
+                  {n.id.toString().padStart(2, '0')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Panel */}
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-8">
+              <h3 className="text-sm font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
+                <User className="text-indigo-600" size={18} /> Detalle de Venta
+              </h3>
+              
+              {selectedNum !== null ? (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl">
+                    <span className="text-indigo-600 text-xs font-bold uppercase">Nº Seleccionado</span>
+                    <span className="text-2xl font-black text-indigo-700">
+                      {selectedNum.toString().padStart(2, '0')}
+                      {raffleInfo.mode === '50' && ` y ${(selectedNum + 50) % 100}`}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">Nombre del Cliente</label>
+                    <input 
+                      autoFocus
+                      placeholder="Ej: Sergio Romero"
+                      value={buyerName}
+                      onChange={e => setBuyerName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSell()}
+                      className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 font-medium placeholder:text-slate-300"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleSell}
+                      className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black hover:bg-indigo-700 shadow-md transition"
+                    >
+                      {buyerName ? 'Confirmar' : 'Vaciado'}
+                    </button>
+                    <button 
+                      onClick={() => setSelectedNum(null)}
+                      className="px-4 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition"
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 px-4 text-slate-300 border-2 border-dashed border-slate-50 rounded-2xl">
+                  <ImageIcon size={32} className="mx-auto mb-2 opacity-20" />
+                  <p className="text-xs font-bold leading-relaxed">Toca un número para registrar al comprador</p>
+                </div>
+              )}
+
+              {/* Tips */}
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">Información</h4>
+                <ul className="text-[11px] text-slate-500 space-y-2 font-medium">
+                  <li className="flex gap-2 items-start">
+                    <CheckCircle2 size={12} className="text-green-500 shrink-0 mt-0.5" />
+                    Los verdes ya están reservados.
+                  </li>
+                  <li className="flex gap-2 items-start">
+                    <CheckCircle2 size={12} className="text-indigo-500 shrink-0 mt-0.5" />
+                    En "Modo Pares", 1 clic vende 2 números.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
