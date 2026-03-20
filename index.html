@@ -34,6 +34,10 @@
                 <div>
                     <h1 class="text-4xl md:text-5xl font-black text-indigo-700 tracking-tighter glow-text">GESTOR DE SORTEOS</h1>
                     <p class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1">Herramientas Libres - Emilio Di Tella</p>
+                    <div id="localStatus" class="flex items-center gap-1.5 mt-2">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Modo Local (Sin Base de Datos)</span>
+                    </div>
                 </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <button onclick="toggleConfig()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border-2 border-slate-200 px-5 py-3 rounded-2xl shadow-sm hover:bg-slate-50 transition font-bold text-slate-600">
@@ -47,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- Display del Premio Actual -->
             <div class="bg-indigo-700 p-6 rounded-[2rem] shadow-2xl text-white relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 opacity-10 rotate-12">
                     <i data-lucide="wrench" class="w-48 h-48"></i>
@@ -59,30 +62,36 @@
 
         <!-- Config Panel -->
         <div id="configPanel" class="hidden bg-white p-6 rounded-3xl shadow-sm border-2 border-slate-100 mb-8 animate-in fade-in slide-in-from-top-4">
-            <h3 class="text-sm font-black text-indigo-600 uppercase mb-6 flex items-center gap-2">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Configuración General
-            </h3>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm font-black text-indigo-600 uppercase flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Configuración General
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="exportData()" class="text-[10px] font-black bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition">EXPORTAR BACKUP</button>
+                    <button onclick="importData()" class="text-[10px] font-black bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition">IMPORTAR BACKUP</button>
+                </div>
+            </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Nombre del Premio</label>
-                    <input id="inTitle" type="text" value="Taladro + Amoladora" oninput="updateDisplay()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <input id="inTitle" type="text" value="Taladro + Amoladora" oninput="updateDisplay(); saveLocal()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Precio por Número</label>
-                    <input id="inPrice" type="number" value="4000" oninput="updateStats()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <input id="inPrice" type="number" value="4000" oninput="updateStats(); saveLocal()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Lotería de Referencia</label>
-                    <input id="inLottery" type="text" value="Quiniela Correntina" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <input id="inLottery" type="text" value="Quiniela Correntina" oninput="saveLocal()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Alias de Pago</label>
-                    <input id="inAlias" type="text" value="herramientaslibres" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <input id="inAlias" type="text" value="herramientaslibres" oninput="saveLocal()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Nombre Titular</label>
-                    <input id="inOwner" type="text" value="Emilio Di Tella" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <input id="inOwner" type="text" value="Emilio Di Tella" oninput="saveLocal()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tipo de Sorteo</label>
@@ -93,26 +102,12 @@
                 </div>
             </div>
 
-            <div class="space-y-3">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Fotos de los artículos</label>
-                <div id="imgContainer" class="flex flex-wrap gap-3">
-                    <label class="w-24 h-24 flex flex-col items-center justify-center border-4 border-dashed border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-50 hover:border-indigo-200 transition text-slate-400">
-                        <i data-lucide="camera" class="w-8 h-8"></i>
-                        <span class="text-[10px] font-black mt-1">AÑADIR</span>
-                        <input type="file" class="hidden" accept="image/*" multiple onchange="handleImages(this)">
-                    </label>
-                </div>
-            </div>
-
             <div class="mt-8 pt-6 border-t border-slate-100 flex justify-end">
                 <button onclick="showResetModal()" class="text-red-500 flex items-center gap-2 text-xs font-black hover:bg-red-50 px-4 py-2 rounded-full transition uppercase tracking-tighter">
                     <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar Todo el Sorteo
                 </button>
             </div>
         </div>
-
-        <!-- Gallery -->
-        <div id="gallery" class="mb-8 flex gap-4 overflow-x-auto pb-2 hide-scroll"></div>
 
         <!-- Stats -->
         <div class="grid grid-cols-3 gap-4 mb-8">
@@ -131,17 +126,13 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Grid -->
             <div class="lg:col-span-2">
                 <h2 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                     <i data-lucide="layout-grid" class="w-4 h-4 text-indigo-600"></i> Tablero de Números
                 </h2>
-                <div id="numberGrid" class="number-grid bg-white p-4 rounded-[2rem] border-2 border-slate-100 shadow-sm">
-                    <!-- Numbers injected by JS -->
-                </div>
+                <div id="numberGrid" class="number-grid bg-white p-4 rounded-[2rem] border-2 border-slate-100 shadow-sm"></div>
             </div>
 
-            <!-- Side Panel -->
             <div class="space-y-6">
                 <div id="salePanel" class="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-sm sticky top-8">
                     <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
@@ -166,16 +157,29 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal para Backup (Input/Output de texto) -->
+    <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-lg w-full shadow-xl">
+            <h3 id="backupTitle" class="text-xl font-black uppercase text-center mb-4">Copia de Seguridad</h3>
+            <p class="text-xs text-slate-400 mb-4 text-center">Copia este código para guardar tu sorteo o pégalo aquí para restaurar uno anterior.</p>
+            <textarea id="backupArea" class="w-full h-48 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-[10px] mb-6 focus:border-indigo-500 outline-none"></textarea>
+            <div class="flex flex-col gap-3">
+                <button id="backupAction" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg shadow-indigo-200">Procesar</button>
+                <button onclick="hideBackupModal()" class="w-full bg-slate-100 py-4 rounded-2xl font-black text-slate-400 uppercase">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Reseteo -->
     <div id="resetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-xl">
             <div class="text-red-600 mb-6 flex flex-col items-center gap-3 text-center">
                 <i data-lucide="alert-triangle" class="w-12 h-12"></i>
-                <h3 class="text-xl font-black uppercase">¿Borrar todo?</h3>
+                <h3 class="text-xl font-black uppercase">¿Confirmar Acción?</h3>
             </div>
-            <p class="text-sm text-slate-500 mb-8 text-center font-medium">Esta acción eliminará todos los compradores y fotos actuales. No se puede deshacer.</p>
+            <p id="resetModalText" class="text-sm text-slate-500 mb-8 text-center font-medium">Esta acción eliminará todos los compradores. No se puede deshacer.</p>
             <div class="flex flex-col gap-3">
-                <button onclick="resetAll()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg shadow-red-200">Sí, limpiar sorteo</button>
+                <button id="resetModalConfirm" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg shadow-red-200">Confirmar</button>
                 <button onclick="hideResetModal()" class="w-full bg-slate-100 py-4 rounded-2xl font-black text-slate-400 uppercase">Cancelar</button>
             </div>
         </div>
@@ -183,31 +187,91 @@
 
     <script>
         let numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false }));
-        let images = [];
-        let imagePreviews = [];
         let selectedIdx = null;
 
         function init() {
+            loadLocal();
             renderGrid();
             updateStats();
             updateDisplay();
             lucide.createIcons();
         }
 
+        // --- SISTEMA DE PERSISTENCIA LOCAL ---
+        function saveLocal() {
+            const data = {
+                title: document.getElementById('inTitle').value,
+                price: document.getElementById('inPrice').value,
+                lottery: document.getElementById('inLottery').value,
+                alias: document.getElementById('inAlias').value,
+                owner: document.getElementById('inOwner').value,
+                mode: document.getElementById('inMode').value,
+                numbers: numbers
+            };
+            localStorage.setItem('raffle_data', JSON.stringify(data));
+        }
+
+        function loadLocal() {
+            const saved = localStorage.getItem('raffle_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('inTitle').value = data.title || '';
+                document.getElementById('inPrice').value = data.price || 4000;
+                document.getElementById('inLottery').value = data.lottery || '';
+                document.getElementById('inAlias').value = data.alias || '';
+                document.getElementById('inOwner').value = data.owner || '';
+                document.getElementById('inMode').value = data.mode || '100';
+                numbers = data.numbers || Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false }));
+            }
+        }
+
+        // --- EXPORTAR / IMPORTAR (PARA MOVER ENTRE DISPOSITIVOS) ---
+        function exportData() {
+            const data = localStorage.getItem('raffle_data');
+            document.getElementById('backupArea').value = data;
+            document.getElementById('backupTitle').innerText = "Exportar Datos";
+            document.getElementById('backupAction').innerText = "Copiar al Portapapeles";
+            document.getElementById('backupAction').onclick = () => {
+                document.getElementById('backupArea').select();
+                document.execCommand('copy');
+                showNotif("Código de Backup Copiado");
+            };
+            document.getElementById('backupModal').classList.remove('hidden');
+        }
+
+        function importData() {
+            document.getElementById('backupArea').value = "";
+            document.getElementById('backupTitle').innerText = "Importar Datos";
+            document.getElementById('backupAction').innerText = "Restaurar Sorteo";
+            document.getElementById('backupAction').onclick = () => {
+                const raw = document.getElementById('backupArea').value;
+                if (!raw) return;
+                try {
+                    localStorage.setItem('raffle_data', raw);
+                    location.reload();
+                } catch(e) { showNotif("Error: Código inválido"); }
+            };
+            document.getElementById('backupModal').classList.remove('hidden');
+        }
+
+        function hideBackupModal() { document.getElementById('backupModal').classList.add('hidden'); }
+
+        // --- LÓGICA DE LA APP ---
         function updateDisplay() {
             const title = document.getElementById('inTitle').value;
             document.getElementById('displayTitle').innerText = title || "Sin Nombre";
         }
 
         function handleModeChange() {
-            // Verificamos si hay ventas antes de cambiar (Opcional, pero recomendado)
             const hasSales = numbers.some(n => n.sold);
             if (hasSales) {
-                showResetModal();
-                showNotif("⚠️ Debes reiniciar para cambiar de modalidad");
+                showResetModal("Cambiar la modalidad requiere reiniciar las ventas actuales.", () => {
+                    resetAll();
+                });
             } else {
                 renderGrid();
                 updateStats();
+                saveLocal();
             }
         }
 
@@ -215,23 +279,14 @@
             const grid = document.getElementById('numberGrid');
             const mode = document.getElementById('inMode').value;
             grid.innerHTML = '';
-            
             const count = mode === '50' ? 50 : 100;
 
             for (let i = 0; i < count; i++) {
                 const n = numbers[i];
                 const btn = document.createElement('button');
-                
-                if (mode === '50') {
-                    btn.innerText = `${i.toString().padStart(2, '0')}-${(i + 50)}`;
-                    btn.className = `h-14 text-[10px] md:text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
-                } else {
-                    btn.innerText = i.toString().padStart(2, '0');
-                    btn.className = `h-12 text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
-                }
-
+                btn.innerText = mode === '50' ? `${i.toString().padStart(2, '0')}-${(i + 50)}` : i.toString().padStart(2, '0');
+                btn.className = `h-14 text-[10px] md:text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
                 if (selectedIdx === i) btn.classList.add('ring-4', 'ring-indigo-500/30', 'scale-110', 'z-10', 'border-indigo-500', 'bg-white', 'text-indigo-700');
-                
                 btn.onclick = () => selectNumber(i);
                 grid.appendChild(btn);
             }
@@ -241,7 +296,6 @@
             selectedIdx = idx;
             const mode = document.getElementById('inMode').value;
             const pairText = mode === '50' ? ` y ${(idx + 50) % 100}` : '';
-            
             const panel = document.getElementById('saleContent');
             panel.innerHTML = `
                 <div class="space-y-6 animate-in zoom-in-95 duration-200">
@@ -266,18 +320,16 @@
         function saveSale() {
             const name = document.getElementById('buyerIn').value.trim();
             const mode = document.getElementById('inMode').value;
-            
             numbers[selectedIdx].buyer = name;
             numbers[selectedIdx].sold = !!name;
-
             if (mode === '50') {
                 const pair = (selectedIdx + 50) % 100;
                 numbers[pair].buyer = name;
                 numbers[pair].sold = !!name;
             }
-
             closePanel();
             updateStats();
+            saveLocal();
             showNotif(name ? "¡Vendido!" : "Liberado");
         }
 
@@ -285,59 +337,10 @@
             const mode = document.getElementById('inMode').value;
             const soldCount = numbers.filter(n => n.sold).length;
             const price = document.getElementById('inPrice').value || 0;
-            
-            // En modo 50, cada venta real ocupa 2 números. 
-            // Mostramos los números ocupados en el tablero.
             document.getElementById('statSold').innerText = soldCount;
             document.getElementById('statFree').innerText = 100 - soldCount;
-            
-            // Si es modo 50, el dinero recaudado es (soldCount / 2) * price, 
-            // ya que soldCount cuenta los números individuales ocupados.
             const totalCash = mode === '50' ? (soldCount / 2) * price : soldCount * price;
             document.getElementById('statCash').innerText = '$' + totalCash.toLocaleString();
-        }
-
-        function handleImages(input) {
-            if (input.files) {
-                Array.from(input.files).forEach(file => {
-                    images.push(file);
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        imagePreviews.push(e.target.result);
-                        renderGallery();
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        }
-
-        function renderGallery() {
-            const gal = document.getElementById('gallery');
-            const cont = document.getElementById('imgContainer');
-            const uploadBtn = cont.querySelector('label');
-            cont.innerHTML = '';
-            cont.appendChild(uploadBtn);
-            gal.innerHTML = '';
-
-            imagePreviews.forEach((src, i) => {
-                const div = document.createElement('div');
-                div.className = "relative w-24 h-24 group";
-                div.innerHTML = `<img src="${src}" class="w-full h-full object-cover rounded-2xl border-2 border-slate-100 shadow-sm">
-                                <button onclick="removeImg(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white"><i data-lucide="x" class="w-3 h-3"></i></button>`;
-                cont.insertBefore(div, uploadBtn);
-
-                const imgDiv = document.createElement('div');
-                imgDiv.className = "shrink-0 w-64 h-40 rounded-[2rem] overflow-hidden shadow-xl border-4 border-white";
-                imgDiv.innerHTML = `<img src="${src}" class="w-full h-full object-cover">`;
-                gal.appendChild(imgDiv);
-            });
-            lucide.createIcons();
-        }
-
-        function removeImg(i) {
-            images.splice(i, 1);
-            imagePreviews.splice(i, 1);
-            renderGallery();
         }
 
         async function handleShare() {
@@ -347,75 +350,38 @@
             const alias = document.getElementById('inAlias').value;
             const owner = document.getElementById('inOwner').value;
             const mode = document.getElementById('inMode').value;
-
-            let soldText = "";
-            let freeText = "";
+            let soldText = ""; let freeText = "";
 
             if (mode === '50') {
-                let soldList = [];
-                let freeList = [];
+                let soldList = []; let freeList = [];
                 for (let i = 0; i < 50; i++) {
                     const pairStr = `${i.toString().padStart(2, '0')}-${(i + 50).toString().padStart(2, '0')}`;
-                    if (numbers[i].sold) {
-                        soldList.push(`✅ *${pairStr}* ${numbers[i].buyer}`);
-                    } else {
-                        freeList.push(pairStr);
-                    }
+                    if (numbers[i].sold) soldList.push(`✅ *${pairStr}* ${numbers[i].buyer}`);
+                    else freeList.push(pairStr);
                 }
-                soldText = soldList.join('\n');
-                freeText = freeList.join(' / ');
+                soldText = soldList.join('\n'); freeText = freeList.join(' / ');
             } else {
                 soldText = numbers.filter(n => n.sold).map(n => `✅ *${n.id.toString().padStart(2, '0')}* ${n.buyer}`).join('\n');
                 freeText = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
             }
 
-            const text = `🚀 *S O R T E O* 🚀
-🔥 *${title.split('').join(' ')}* 🔥
-
-🛠️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}
-🎲 *SORTEA POR:* ${lottery}
-💵 *VALOR:* $${price}
-🏦 *ALIAS:* ${alias}
-👤 *TITULAR:* ${owner}
-
-📝 *VENDIDOS:*
-${soldText || '_¡Nadie aún! Sé el primero..._'}
-
-🎟️ *DISPONIBLES:*
-${freeText}
-
-✨ _¡Muchas gracias por participar y mucha suerte!_ ✨
-📲 *Envie el comprobante por privado*`;
-
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: images }) && images.length > 0) {
-                try {
-                    await navigator.share({
-                        files: images,
-                        title: `Sorteo ${title}`,
-                        text: text 
-                    });
-                    showNotif("✅ Imágenes enviadas. ¡No olvides PEGAR el texto!");
-                } catch (err) {
-                    if (err.name !== 'AbortError') showNotif("✅ Texto copiado");
-                }
-            } else {
-                showNotif("✅ Texto copiado. ¡Pégalo en WhatsApp!");
-            }
+            const text = `🚀 *S O R T E O* 🚀\n🔥 *${title.split('').join(' ')}* 🔥\n\n🛠️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}\n🎲 *SORTEA POR:* ${lottery}\n💵 *VALOR:* $${price}\n🏦 *ALIAS:* ${alias}\n👤 *TITULAR:* ${owner}\n\n📝 *VENDIDOS:*\n${soldText || '_¡Nadie aún!_ '}\n\n🎟️ *DISPONIBLES:*\n${freeText}\n\n✨ ¡Muchas gracias! ✨\n📲 *Envie comprobante*`;
+            const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            showNotif("✅ Texto copiado al portapapeles");
         }
 
         function toggleConfig() { document.getElementById('configPanel').classList.toggle('hidden'); }
         function closePanel() { selectedIdx = null; document.getElementById('saleContent').innerHTML = '<div class="text-center py-12 px-4 text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl"><i data-lucide="touchpad" class="w-10 h-10 mx-auto mb-4 opacity-10"></i><p class="text-xs font-bold leading-relaxed">Toca un número para asignar un dueño</p></div>'; renderGrid(); lucide.createIcons(); }
         function showNotif(msg) { const n = document.getElementById('notif'); document.getElementById('notifText').innerText = msg; n.classList.remove('hidden'); setTimeout(() => n.classList.add('hidden'), 4000); }
-        function showResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
+        function showResetModal(msg, onConfirm) {
+            const modal = document.getElementById('resetModal');
+            document.getElementById('resetModalText').innerText = msg || "Esta acción eliminará todos los compradores. No se puede deshacer.";
+            const confirmBtn = document.getElementById('resetModalConfirm');
+            confirmBtn.onclick = () => { onConfirm ? onConfirm() : resetAll(); hideResetModal(); };
+            modal.classList.remove('hidden');
+        }
         function hideResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
-        function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); images = []; imagePreviews = []; renderGrid(); renderGallery(); updateStats(); hideResetModal(); showNotif("Reinicio Completo"); }
+        function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); renderGrid(); updateStats(); saveLocal(); showNotif("Sorteo Reiniciado"); }
 
         window.onload = init;
     </script>
