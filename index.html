@@ -20,7 +20,6 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Animación para el título */
         .glow-text {
             text-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
         }
@@ -48,7 +47,7 @@
                 </div>
             </div>
 
-            <!-- Display del Premio Actual (Muy Grande) -->
+            <!-- Display del Premio Actual -->
             <div class="bg-indigo-700 p-6 rounded-[2rem] shadow-2xl text-white relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 opacity-10 rotate-12">
                     <i data-lucide="wrench" class="w-48 h-48"></i>
@@ -87,7 +86,7 @@
                 </div>
                 <div>
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tipo de Sorteo</label>
-                    <select id="inMode" onchange="resetConfirm()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
+                    <select id="inMode" onchange="handleModeChange()" class="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-bold">
                         <option value="100">100 Números (Individuales)</option>
                         <option value="50">50 Números (Pares 00-50)</option>
                     </select>
@@ -200,17 +199,42 @@
             document.getElementById('displayTitle').innerText = title || "Sin Nombre";
         }
 
+        function handleModeChange() {
+            // Verificamos si hay ventas antes de cambiar (Opcional, pero recomendado)
+            const hasSales = numbers.some(n => n.sold);
+            if (hasSales) {
+                showResetModal();
+                showNotif("⚠️ Debes reiniciar para cambiar de modalidad");
+            } else {
+                renderGrid();
+                updateStats();
+            }
+        }
+
         function renderGrid() {
             const grid = document.getElementById('numberGrid');
+            const mode = document.getElementById('inMode').value;
             grid.innerHTML = '';
-            numbers.forEach((n, i) => {
+            
+            const count = mode === '50' ? 50 : 100;
+
+            for (let i = 0; i < count; i++) {
+                const n = numbers[i];
                 const btn = document.createElement('button');
-                btn.innerText = i.toString().padStart(2, '0');
-                btn.className = `h-12 text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
+                
+                if (mode === '50') {
+                    btn.innerText = `${i.toString().padStart(2, '0')}-${(i + 50)}`;
+                    btn.className = `h-14 text-[10px] md:text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
+                } else {
+                    btn.innerText = i.toString().padStart(2, '0');
+                    btn.className = `h-12 text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
+                }
+
                 if (selectedIdx === i) btn.classList.add('ring-4', 'ring-indigo-500/30', 'scale-110', 'z-10', 'border-indigo-500', 'bg-white', 'text-indigo-700');
+                
                 btn.onclick = () => selectNumber(i);
                 grid.appendChild(btn);
-            });
+            }
         }
 
         function selectNumber(idx) {
@@ -258,11 +282,19 @@
         }
 
         function updateStats() {
+            const mode = document.getElementById('inMode').value;
             const soldCount = numbers.filter(n => n.sold).length;
             const price = document.getElementById('inPrice').value || 0;
+            
+            // En modo 50, cada venta real ocupa 2 números. 
+            // Mostramos los números ocupados en el tablero.
             document.getElementById('statSold').innerText = soldCount;
             document.getElementById('statFree').innerText = 100 - soldCount;
-            document.getElementById('statCash').innerText = '$' + (soldCount * price).toLocaleString();
+            
+            // Si es modo 50, el dinero recaudado es (soldCount / 2) * price, 
+            // ya que soldCount cuenta los números individuales ocupados.
+            const totalCash = mode === '50' ? (soldCount / 2) * price : soldCount * price;
+            document.getElementById('statCash').innerText = '$' + totalCash.toLocaleString();
         }
 
         function handleImages(input) {
@@ -316,10 +348,27 @@
             const owner = document.getElementById('inOwner').value;
             const mode = document.getElementById('inMode').value;
 
-            const sold = numbers.filter(n => n.sold).map(n => `✅ *${n.id.toString().padStart(2, '0')}* ${n.buyer}`).join('\n');
-            const free = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
+            let soldText = "";
+            let freeText = "";
 
-            // Formato de texto con la instrucción de enviar comprobante
+            if (mode === '50') {
+                let soldList = [];
+                let freeList = [];
+                for (let i = 0; i < 50; i++) {
+                    const pairStr = `${i.toString().padStart(2, '0')}-${(i + 50).toString().padStart(2, '0')}`;
+                    if (numbers[i].sold) {
+                        soldList.push(`✅ *${pairStr}* ${numbers[i].buyer}`);
+                    } else {
+                        freeList.push(pairStr);
+                    }
+                }
+                soldText = soldList.join('\n');
+                freeText = freeList.join(' / ');
+            } else {
+                soldText = numbers.filter(n => n.sold).map(n => `✅ *${n.id.toString().padStart(2, '0')}* ${n.buyer}`).join('\n');
+                freeText = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
+            }
+
             const text = `🚀 *S O R T E O* 🚀
 🔥 *${title.split('').join(' ')}* 🔥
 
@@ -330,15 +379,14 @@
 👤 *TITULAR:* ${owner}
 
 📝 *VENDIDOS:*
-${sold || '_¡Nadie aún! Sé el primero..._'}
+${soldText || '_¡Nadie aún! Sé el primero..._'}
 
 🎟️ *DISPONIBLES:*
-${free}
+${freeText}
 
 ✨ _¡Muchas gracias por participar y mucha suerte!_ ✨
 📲 *Envie el comprobante por privado*`;
 
-            // PASO 1: Siempre copiar el texto al portapapeles automáticamente
             const el = document.createElement('textarea');
             el.value = text;
             document.body.appendChild(el);
@@ -346,7 +394,6 @@ ${free}
             document.execCommand('copy');
             document.body.removeChild(el);
 
-            // PASO 2: Intentar compartir archivos
             if (navigator.share && navigator.canShare && navigator.canShare({ files: images }) && images.length > 0) {
                 try {
                     await navigator.share({
@@ -369,7 +416,6 @@ ${free}
         function showResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
         function hideResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
         function resetAll() { numbers = Array.from({length: 100}, (_, i) => ({ id: i, buyer: '', sold: false })); images = []; imagePreviews = []; renderGrid(); renderGallery(); updateStats(); hideResetModal(); showNotif("Reinicio Completo"); }
-        function resetConfirm() { if(confirm("Al cambiar la modalidad se reiniciarán las ventas actuales. ¿Continuar?")) resetAll(); }
 
         window.onload = init;
     </script>
