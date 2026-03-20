@@ -115,7 +115,7 @@
                         <option value="50">50 Números (Pares 00-50)</option>
                     </select>
                 </div>
-                <!-- NUEVO: Campo de Ganador -->
+                <!-- Campo de Ganador -->
                 <div class="md:col-span-3 bg-yellow-50 p-4 rounded-2xl border-2 border-yellow-100">
                     <label class="text-[10px] font-black text-yellow-600 uppercase tracking-widest block mb-2">Número Ganador (Opcional)</label>
                     <div class="flex gap-2">
@@ -197,7 +197,7 @@
 
     <!-- Modal de Reseteo -->
     <div id="resetModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-xl">
+        <div class="bg-white rounded-[2.5rem] p-8 max-sm w-full shadow-xl">
             <div class="text-red-600 mb-6 flex flex-col items-center gap-3 text-center">
                 <i data-lucide="alert-triangle" class="w-12 h-12"></i>
                 <h3 class="text-xl font-black uppercase">¿Confirmar Acción?</h3>
@@ -266,14 +266,12 @@
             const winnerIdx = parseInt(winnerVal);
             const mode = document.getElementById('inMode').value;
             
-            // Si el número ingresado es > 99, ignorar
             if (isNaN(winnerIdx) || winnerIdx < 0 || winnerIdx > 99) {
                 document.getElementById('winnerDisplayNum').innerText = "??";
                 document.getElementById('winnerDisplayName').innerText = "Número inválido";
                 return;
             }
 
-            // Identificar el par si es modo 50
             let label = winnerIdx.toString().padStart(2, '0');
             let dataIdx = winnerIdx;
 
@@ -306,7 +304,6 @@
             
             let csvContent = "\uFEFF"; // BOM para UTF-8
             
-            // Encabezado de información general
             csvContent += "INFORMACIÓN DEL SORTEO\n";
             csvContent += `Premio;${title}\n`;
             csvContent += `Valor Número;${price}\n`;
@@ -314,7 +311,6 @@
             csvContent += `Alias Pago;${alias}\n`;
             csvContent += `Titular;${owner}\n`;
             
-            // Información del Ganador si existe
             if (winnerVal !== "") {
                 const wIdx = parseInt(winnerVal);
                 const wDataIdx = mode === '50' ? (wIdx % 50) : wIdx;
@@ -413,6 +409,10 @@
                 const n = numbers[i];
                 const btn = document.createElement('button');
                 btn.innerText = mode === '50' ? `${i.toString().padStart(2, '0')}-${(i + 50)}` : i.toString().padStart(2, '0');
+                
+                // Añadimos el atributo title para mostrar el comprador al posar el cursor
+                btn.title = n.sold ? `Comprador: ${n.buyer}` : "Disponible";
+                
                 btn.className = `h-14 text-[10px] md:text-xs font-black rounded-2xl transition-all border-2 ${n.sold ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-indigo-400 hover:text-indigo-600'}`;
                 if (selectedIdx === i) btn.classList.add('ring-4', 'ring-indigo-500/30', 'scale-110', 'z-10', 'border-indigo-500', 'bg-white', 'text-indigo-700');
                 btn.onclick = () => selectNumber(i);
@@ -457,7 +457,7 @@
             }
             closePanel();
             updateStats();
-            updateWinner(); // Actualizar si el número editado era el ganador
+            updateWinner();
             saveLocal();
             showNotif(name ? "¡Vendido!" : "Liberado");
         }
@@ -496,7 +496,6 @@
                 freeText = numbers.filter(n => !n.sold).map(n => n.id.toString().padStart(2, '0')).join(' - ');
             }
 
-            // Sección de ganador para el mensaje
             let winnerText = "";
             if (winnerVal !== "") {
                 const wIdx = parseInt(winnerVal);
@@ -506,7 +505,7 @@
                 winnerText = `\n🏆 *GANADOR:* ${wLabel} - ${wName}\n`;
             }
 
-            const text = `🚀 *S O R T E O* 🚀\n🔥 *${title.split('').join(' ')}* 🔥\n\n🛠️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}\n🎲 *SORTEA POR:* ${lottery}\n💵 *VALOR:* $${price}\n🏦 *ALIAS:* ${alias}\n👤 *TITULAR:* ${owner}\n${winnerText}\n📝 *VENDIDOS:*\n${soldText || '_¡Nadie aún!_ '}\n\n🎟️ *DISPONIBLES:*\n${freeText}\n\n✨ ¡Muchas gracias! ✨\n📲 *Envie comprobante*`;
+            const text = `🚀 *S O R T E O* 🚀\n🔥 *${title.split('').join(' ')}* 🔥\n\n🛠️ *MODALIDAD:* ${mode === '100' ? '100 números' : '50 números (pares)'}\n🎲 *SORTEA POR:* ${lottery}\n💵 *VALOR:* $${price}\n🏦 *ALIAS:* ${alias}\n👤 *TITULAR:* ${owner}\n${winnerText}\n📝 *VENDIDOS:*\n${soldText || '_¡Nadie aún!_ '}\n\n🎟️ *DISPONIBLES:*\n${freeText}\n\n✨ ¡Muchas gracias! ✨\n📲 *Envie comprobante por privado*`;
             
             const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             showNotif("✅ Texto copiado al portapapeles");
